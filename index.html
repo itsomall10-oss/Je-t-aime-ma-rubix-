@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Héritage Suprême - Rouguiatou & Mouhamed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;700;900&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #010101;
+            --text-main: #f0f0f0;
+            --text-body: #d1d1d1;
+            --gold: #d4af37;
+            --gold-bright: #f3e5ab;
+            --transition-long: all 2.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.light-mode {
+            --bg: #fcfaf2;
+            --text-main: #1a1a1a;
+            --text-body: #333333;
+            --gold: #8a6d3b;
+            --gold-bright: #d4af37;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Cormorant Garamond', serif;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            touch-action: none;
+            transition: background-color 0.8s ease, color 0.8s ease;
+        }
+
+        #particle-canvas {
+            position: fixed; inset: 0; z-index: 1; pointer-events: none;
+        }
+
+        #cursor {
+            position: fixed; width: 30px; height: 30px;
+            border: 1px solid var(--gold);
+            border-radius: 50%; pointer-events: none; z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .nav-progress {
+            position: fixed; top: 0; left: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--gold-bright));
+            width: 0%; z-index: 10001;
+        }
+
+        #theme-toggle {
+            position: fixed; top: 20px; right: 20px; z-index: 10002;
+            background: transparent; border: 1px solid var(--gold);
+            color: var(--gold); padding: 8px; border-radius: 50%;
+            cursor: pointer; width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .view-page {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
+            transition: var(--transition-long);
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .view-hidden { opacity: 0; pointer-events: none; transform: scale(1.1); filter: blur(30px); }
+
+        .title-hero {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2.2rem, 10vw, 6rem);
+            font-weight: 900; 
+            letter-spacing: 0.2em;
+            background: linear-gradient(to bottom, var(--text-main), var(--gold), #8a6d3b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            width: 100%;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+        }
+
+        .counter-box {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+            letter-spacing: 2px;
+            color: var(--gold);
+            padding: 10px 15px;
+            border: 1px solid var(--gold);
+            backdrop-filter: blur(5px);
+            white-space: nowrap;
+        }
+
+        .scroll-container {
+            height: 100%; width: 100%; overflow-y: auto;
+            scrollbar-width: none; scroll-behavior: smooth;
+            padding: 25vh 8%;
+            touch-action: pan-y;
+        }
+        .scroll-container::-webkit-scrollbar { display: none; }
+
+        .content-card {
+            max-width: 800px; margin: 0 auto 30vh auto;
+            opacity: 0; transform: translateY(50px);
+            transition: var(--transition-long);
+        }
+        .content-card.active { opacity: 1; transform: translateY(0); }
+
+        .text-body {
+            font-size: clamp(1.1rem, 3.5vw, 1.8rem);
+            line-height: 1.8; font-style: italic; font-weight: 300;
+            color: var(--text-body);
+            text-align: justify;
+        }
+
+        .thought-bubble {
+            position: fixed; pointer-events: none; z-index: 9999;
+            font-family: 'Cinzel', serif; font-size: 14px;
+            color: var(--gold-bright); letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+            animation: floatingThought 5s ease-out forwards;
+        }
+        @keyframes floatingThought {
+            0% { transform: translate(-50%, 0) scale(0.8); opacity: 0; }
+            15% { opacity: 1; transform: translate(-50%, -20px) scale(1.1); }
+            85% { opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(1.5); opacity: 0; }
+        }
+
+        .btn-enter {
+            margin-top: 2.5rem; padding: 1rem 2.5rem;
+            border: 1px solid var(--gold);
+            color: var(--gold); font-family: 'Cinzel', serif;
+            text-transform: uppercase; letter-spacing: 4px;
+            background: transparent; cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.3s;
+        }
+
+        .final-signature {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            color: var(--gold);
+            margin-top: 1.5rem; opacity: 0;
+            transition: 3s ease;
+        }
+        .active .final-signature { opacity: 1; }
+        
+        strong { color: var(--gold); font-weight: 600; }
+        
+        .dialogue-box {
+            border-left: 2px solid var(--gold);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body onmousemove="onInteraction(event)" ontouchmove="onInteraction(event)">
+
+    <div class="nav-progress" id="bar"></div>
+    <div id="cursor"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <button id="theme-toggle" onclick="toggleTheme()" title="Changer de thème">
+        <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+
+    <section id="home" class="view-page">
+        <div class="flex flex-col items-center justify-center">
+            <p class="text-[9px] tracking-[0.8em] text-gray-500 uppercase mb-4">L'Héritage d'un Amour</p>
+            <h1 class="title-hero" id="hero-name">ROUGUIATOU</h1>
+            <div class="counter-box" id="timer">Initialisation...</div>
+            <button class="btn-enter" onclick="startJourney()">Entrer dans mon cœur</button>
+        </div>
+    </section>
+
+    <section id="story" class="view-page view-hidden">
+        <div class="scroll-container" id="scroller" onscroll="handleScroll()">
+            <div class="content-card">
+                <p class="text-accent font-['Cinzel'] text-[10px] tracking-[8px] mb-8">L'INSTANT INITIAL</p>
+                <h2 class="text-4xl italic mb-10">Ma Douce Rouguiatou, ❤️</h2>
+                <p class="text-body">
+                    Depuis ce <span class="text-[#d4af37]">08 Février 2025</span>, ma vie a trouvé sa véritable boussole. Évoquer ton nom, <strong>Rouguiatou</strong>, c'est convoquer une lumière qui transforme chaque ombre en éclat. Tu es cette évidence céleste qui a balayé le superflu pour ne laisser place qu'à l'essentiel : nous.
+                </p>
+            </div>
+
+            <div class="content-card">
+                <p class="text-body">
+                    Chaque jour à tes côtés est une promesse tenue, une redécouverte constante de la femme merveilleuse que tu es. Ton sourire est mon refuge le plus sûr, et ton regard, le miroir où je puise la force de devenir meilleur. Tu es ma Reine, celle qui règne avec une grâce infinie sur le territoire sacré de mon cœur.
+                </p>
+            </div>
+
+            <div class="content-card">
+                <p class="text-body">
+                    <strong>Il est vrai que notre voyage a connu des hauts et des bas</strong>, ces instants de tempête où le doute tente de s'immiscer. Mais ce qui me subjugue, <strong>Rouguiatou</strong>, c'est ta force admirable. Tu as su supporter ces épreuves par pur amour, restant ce pilier inébranlable malgré les vagues. Aujourd'hui, en t'ouvrant ma plus profonde vulnérabilité, j'espère de tout mon être que tu ne me feras jamais regretter de t'avoir connue et de t'avoir donné cette place si précieuse dans ma vie.
+                </p>
+            </div>
+
+            <div class="content-card">
+                <p class="text-body">
+                    Nous bâtissons ensemble un empire de souvenirs, un héritage de tendresse et de loyauté. Porter ton amour est ma plus grande fierté, une distinction que je porte avec un honneur immense. Je serai ton rempart face au monde, ton soutien inconditionnel dans le silence, et le premier admirateur de chacun de tes souffles.
+                </p>
+                
+                <div class="dialogue-box text-body">
+                    <p class="mb-4"><strong>Moi :</strong> "Parfois tu connais on peux être submergé par les coups de la réalité mais y'a des personnes quand tu les vois tu retrouves le sourire immédiat parce qu'elles font rêver (t'es l'exemple parfait pour moi)"</p>
+                    <p><strong>Rouguie :</strong> "Blh et mm que tu l'est admire après ❤‍🩹 Tu retrouve le sourire quand tu les voie parce que ton cœur les choisi et que tes yeux ne veut voir qu'eux, ton corp ne veut qu'eux, et que ton âme et plus apaisée à l'heure présence Et c'est l'exemple parfait de toi 💞😏"</p>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <p class="text-body">
+                    Que cette aventure continue de s'écrire en lettres d'or. Je veux tout vivre avec toi, car sans ta présence, l'univers perdrait son relief. Mon engagement envers toi est total et solennel, aujourd'hui, demain, et pour l'éternité. Merci d'être toi, merci d'être ma <strong>Rouguiatou</strong>.
+                </p>
+            </div>
+
+            <div class="content-card text-center pb-40">
+                <p class="text-2xl italic mb-10">"Je te veux jusqu'à ma tombe... ⚰️🖤"</p>
+                <div class="final-signature">Mouhamed Touré</div>
+                <p class="text-[9px] tracking-[8px] text-gray-500 mt-10 uppercase">À jamais le tien</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const startDate = new Date(2025, 1, 8, 0, 0, 0); 
+        const phrases = ["ROUGUIATOU 💍", "NOTRE FORCE 💪", "MA REINE 👑", "LOYAUTÉ 🛡️", "08.02.25 ♾️", "SANS REGRET ✨", "M+R ❤️", "MOUHAMED ❤️", "T'AIME ❤️"];
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            const icon = document.getElementById('theme-icon');
+            if(isLight) {
+                icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+            } else {
+                icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+            }
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = now - startDate;
+            if (diff < 0) {
+                document.getElementById('timer').innerText = "Le compte à rebours commence...";
+                return;
+            }
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const m = Math.floor((diff / (1000 * 60)) % 60);
+            const s = Math.floor((diff / 1000) % 60);
+            document.getElementById('timer').innerText = `${d}J • ${h}H • ${m}M • ${s}S`;
+        }
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = Array.from({length: 50}, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.15,
+                vy: -Math.random() * 0.4 - 0.1,
+                size: Math.random() * 1.5
+            }));
+        }
+
+        function animate() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.y < -5) p.y = canvas.height + 5;
+                ctx.fillStyle = document.body.classList.contains('light-mode') ? "rgba(138, 109, 59, 0.2)" : "rgba(212, 175, 55, 0.3)";
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+        initParticles(); animate();
+
+        function onInteraction(event) {
+            const x = event.clientX || (event.touches ? event.touches[0].clientX : 0);
+            const y = event.clientY || (event.touches ? event.touches[0].clientY : 0);
+            const cursor = document.getElementById('cursor');
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+        }
+
+        function startJourney() {
+            const toggle = document.getElementById('theme-toggle');
+            toggle.style.opacity = '0';
+            toggle.style.pointerEvents = 'none';
+            toggle.style.transform = 'translateY(-20px)';
+            
+            document.getElementById('home').classList.add('view-hidden');
+            setTimeout(() => {
+                document.getElementById('home').style.display = 'none';
+                document.getElementById('story').classList.remove('view-hidden');
+            }, 2000);
+        }
+
+        function spawnThought(x, y) {
+            const b = document.createElement('div');
+            b.className = 'thought-bubble';
+            b.innerHTML = phrases[Math.floor(Math.random() * phrases.length)];
+            b.style.left = x + 'px'; b.style.top = y + 'px';
+            const tx = (Math.random() - 0.5) * 350;
+            const ty = -window.innerHeight * 0.5;
+            b.style.setProperty('--tx', `${tx}px`);
+            b.style.setProperty('--ty', `${ty}px`);
+            document.body.appendChild(b);
+            setTimeout(() => b.remove(), 5000);
+        }
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.target.closest('#theme-toggle') || e.target.closest('.btn-enter')) return;
+            spawnThought(e.clientX, e.clientY);
+        });
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#theme-toggle') || e.target.closest('.btn-enter')) return;
+            spawnThought(e.touches[0].clientX, e.touches[0].clientY);
+        });
+
+        function handleScroll() {
+            const s = document.getElementById('scroller');
+            const p = (s.scrollTop / (s.scrollHeight - s.clientHeight)) * 100;
+            document.getElementById('bar').style.width = p + '%';
+        }
+
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.content-card').forEach(card => obs.observe(card));
+
+        window.addEventListener('resize', initParticles);
+    </script>
+</body>
+</html>
